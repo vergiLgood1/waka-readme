@@ -150,6 +150,7 @@ class WakaInput:
     language_count: str | int = os.getenv("INPUT_LANG_COUNT") or 5
     stop_at_other: str | bool = os.getenv("INPUT_STOP_AT_OTHER") or False
     ignored_languages: str = os.getenv("INPUT_IGNORED_LANGUAGES", "")
+    langs: str = os.getenv("INPUT_LANGS", "")
     # # optional meta
     target_branch: str = os.getenv("INPUT_TARGET_BRANCH", "NOT_SET")
     target_path: str = os.getenv("INPUT_TARGET_PATH", "NOT_SET")
@@ -300,6 +301,39 @@ def _parse_langs(raw: str, /) -> list[str]:
         if name and name not in parsed:
             parsed.append(name)
     return parsed
+
+
+def _select_languages(lang_info: list[dict[str, Any]], /) -> list[dict[str, Any]]:
+    """Apply allowlist, ignore list, count, and stop-at-other rules."""
+    requested = _parse_langs(wk_i.langs)
+    if requested:
+        available = {str(lang["name"]) for lang in lang_info}
+        for name in requested:
+            if name not in available:
+                logger.warning(f"LANGS entry '{name}' not found in WakaTime stats")
+        wanted = set(requested)
+        lang_info = [lang for lang in lang_info if str(lang["name"]) in wanted]
+
+    ignored = set(_extract_ignored_languages())
+    logger.debug(f"Ignoring {', '.join(ignored)}")
+    lang_info = [lang for lang in lang_info if str(lang["name"]) not in ignored]
+
+    count = int(wk_i.language_count)
+    if count == 0:
+        logger.debug(
+            "Set INPUT_LANG_COUNT to -1 to retrieve all language"
+            + " or specify a positive number (ie. above 0)"
+        )
+        return []
+
+    selected: list[dict[str, Any]] = []
+    for lang in lang_info:
+        selected.append(lang)
+        if wk_i.stop_at_other and str(lang["name"]) == "Other":
+            break
+        if count > 0 and len(selected) >= count:
+            break
+    return selected
 
 
 def prep_content(stats: dict[str, Any], /):

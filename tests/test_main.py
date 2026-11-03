@@ -7,6 +7,7 @@ from itertools import product
 import os
 import sys
 import unittest
+from unittest.mock import patch
 
 # from pathlib import Path
 # from inspect import cleandoc
@@ -136,6 +137,79 @@ class TestMain(unittest.TestCase):
         )
         self.assertEqual(prime._parse_langs(""), [])
         self.assertEqual(prime._parse_langs("   "), [])
+
+    def _set_wk(self, **kwargs) -> None:
+        """Replace the module config for a selection test."""
+        self._old_wk_i = getattr(prime, "wk_i", None)
+        prime.wk_i = prime.WakaInput(**kwargs)
+
+    def tearDown(self) -> None:
+        """Restore the module config after a selection test."""
+        if hasattr(self, "_old_wk_i"):
+            if self._old_wk_i is None:
+                del prime.wk_i
+            else:
+                prime.wk_i = self._old_wk_i
+
+    @staticmethod
+    def _lang_info() -> list[dict]:
+        """Synthetic WakaTime language rows."""
+        return [
+            {"name": "Python", "text": "10 hrs", "percent": 60.0},
+            {"name": "JavaScript", "text": "4 hrs", "percent": 25.0},
+            {"name": "Go", "text": "2 hrs", "percent": 10.0},
+            {"name": "Other", "text": "1 hr", "percent": 5.0},
+        ]
+
+    def test_select_languages_allowlist_keeps_api_order(self) -> None:
+        """Allowlist filters but keeps descending-time order."""
+        self._set_wk(langs="Go, Python", language_count=5)
+        self.assertEqual(
+            [row["name"] for row in prime._select_languages(self._lang_info())],
+            ["Python", "Go"],
+        )
+
+    def test_select_languages_is_case_sensitive(self) -> None:
+        """Lowercase allowlist entries do not match API names."""
+        self._set_wk(langs="python", language_count=5)
+        self.assertEqual(prime._select_languages(self._lang_info()), [])
+
+    def test_select_languages_warns_for_unknown_name(self) -> None:
+        """Unknown allowlist entries are warned about and skipped."""
+        self._set_wk(langs="Python, Rust", language_count=5)
+        with patch.object(prime.logger, "warning") as warn:
+            selected = prime._select_languages(self._lang_info())
+        self.assertEqual([row["name"] for row in selected], ["Python"])
+        warn.assert_any_call("LANGS entry 'Rust' not found in WakaTime stats")
+
+    def test_select_languages_ignore_wins(self) -> None:
+        """IGNORED_LANGUAGES overrides LANGS on overlap."""
+        self._set_wk(langs="Python, Go", ignored_languages="Go", language_count=5)
+        self.assertEqual(
+            [row["name"] for row in prime._select_languages(self._lang_info())],
+            ["Python"],
+        )
+
+    def test_select_languages_count_applies_after_filters(self) -> None:
+        """Filtered-out rows do not consume LANG_COUNT slots."""
+        self._set_wk(ignored_languages="Python", language_count=2)
+        self.assertEqual(
+            [row["name"] for row in prime._select_languages(self._lang_info())],
+            ["JavaScript", "Go"],
+        )
+
+    def test_select_languages_count_minus_one_and_stop_at_other(self) -> None:
+        """Unlimited count still honors STOP_AT_OTHER."""
+        self._set_wk(language_count=-1, stop_at_other=True)
+        self.assertEqual(
+            [row["name"] for row in prime._select_languages(self._lang_info())],
+            ["Python", "JavaScript", "Go", "Other"],
+        )
+
+    def test_select_languages_count_zero_returns_nothing(self) -> None:
+        """LANG_COUNT=0 disables the language list."""
+        self._set_wk(language_count=0)
+        self.assertEqual(prime._select_languages(self._lang_info()), [])
 
     def test_strtobool(self) -> None:
         """Test string to bool."""
