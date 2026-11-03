@@ -292,6 +292,16 @@ def _extract_ignored_languages():
         yield igl
 
 
+def _parse_langs(raw: str, /) -> list[str]:
+    """Parse a comma-separated language allowlist."""
+    parsed: list[str] = []
+    for entry in raw.split(","):
+        name = entry.strip()
+        if name and name not in parsed:
+            parsed.append(name)
+    return parsed
+
+
 def prep_content(stats: dict[str, Any], /):
     """WakaReadme Prepare Markdown.
 

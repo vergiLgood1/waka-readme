@@ -122,6 +122,21 @@ class TestMain(unittest.TestCase):
             r"From: \d{2} \w{3,9} \d{4} - To: \d{2} \w{3,9} \d{4}",
         )
 
+    def test_parse_langs(self) -> None:
+        """Test comma-separated language allowlist parsing."""
+        self.assertEqual(
+            prime._parse_langs("JavaScript, Python, Go"),
+            ["JavaScript", "Python", "Go"],
+        )
+        self.assertEqual(prime._parse_langs(" Python ,,Go, "), ["Python", "Go"])
+        self.assertEqual(prime._parse_langs("Go, Go, Python"), ["Go", "Python"])
+        self.assertEqual(
+            prime._parse_langs("Visual Basic .NET,Jupyter Notebook"),
+            ["Visual Basic .NET", "Jupyter Notebook"],
+        )
+        self.assertEqual(prime._parse_langs(""), [])
+        self.assertEqual(prime._parse_langs("   "), [])
+
     def test_strtobool(self) -> None:
         """Test string to bool."""
         self.assertTrue(prime.strtobool("Yes"))
