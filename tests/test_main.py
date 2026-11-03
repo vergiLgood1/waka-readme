@@ -136,6 +136,7 @@ class TestMain(unittest.TestCase):
             ["Visual Basic .NET", "Jupyter Notebook"],
         )
         self.assertEqual(prime._parse_langs(""), [])
+        self.assertEqual(prime._parse_langs("Go, go"), ["Go", "go"])
         self.assertEqual(prime._parse_langs("   "), [])
 
     def _set_wk(self, **kwargs) -> None:
@@ -201,15 +202,37 @@ class TestMain(unittest.TestCase):
     def test_select_languages_count_minus_one_and_stop_at_other(self) -> None:
         """Unlimited count still honors STOP_AT_OTHER."""
         self._set_wk(language_count=-1, stop_at_other=True)
+        lang_info = [
+            {"name": "Python", "text": "10 hrs", "percent": 60.0},
+            {"name": "Other", "text": "1 hr", "percent": 5.0},
+            {"name": "JavaScript", "text": "4 hrs", "percent": 25.0},
+            {"name": "Go", "text": "2 hrs", "percent": 10.0},
+        ]
         self.assertEqual(
-            [row["name"] for row in prime._select_languages(self._lang_info())],
-            ["Python", "JavaScript", "Go", "Other"],
+            [row["name"] for row in prime._select_languages(lang_info)],
+            ["Python", "Other"],
         )
 
     def test_select_languages_count_zero_returns_nothing(self) -> None:
         """LANG_COUNT=0 disables the language list."""
         self._set_wk(language_count=0)
         self.assertEqual(prime._select_languages(self._lang_info()), [])
+
+    def test_select_languages_empty_langs_keeps_current_output(self) -> None:
+        """Empty LANGS selects the full API list unchanged."""
+        self._set_wk(language_count=5, langs="")
+        self.assertEqual(
+            [row["name"] for row in prime._select_languages(self._lang_info())],
+            ["Python", "JavaScript", "Go", "Other"],
+        )
+
+    def test_select_languages_count_minus_one_returns_all(self) -> None:
+        """LANG_COUNT=-1 returns every row when STOP_AT_OTHER is off."""
+        self._set_wk(language_count=-1)
+        self.assertEqual(
+            [row["name"] for row in prime._select_languages(self._lang_info())],
+            ["Python", "JavaScript", "Go", "Other"],
+        )
 
     @staticmethod
     def _stats() -> dict:

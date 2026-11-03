@@ -358,7 +358,7 @@ def prep_content(stats: dict[str, Any], /):
     elif wk_i.show_total_time and (total_time := stats.get("human_readable_total")):
         contents += f"Total Time: {total_time}\n\n"
 
-    lang_info: list[dict[str, int | float | str]] | None = []
+    lang_info: list[dict[str, Any]] | None = []
 
     # Check if any language data exists
     if not (lang_info := stats.get("languages")):
@@ -369,6 +369,7 @@ def prep_content(stats: dict[str, Any], /):
     # make lang content
     selected = _select_languages(lang_info)
     if not selected:
+        logger.debug("No languages selected\n")
         return contents.rstrip("\n")
 
     pad_len = len(max((str(lang["name"]) for lang in selected), key=len))

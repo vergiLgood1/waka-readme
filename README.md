@@ -124,7 +124,7 @@ There are many flags that you can modify as you see fit.
 | `SHOW_TIME`         | `true`, `false`                                                         | Displays the amount of time spent for each language                               |
 | `SHOW_TOTAL`        | `false`, `true`                                                         | Show total coding time                                                            |
 | `SHOW_MASKED_TIME`  | `false`, `true`                                                         | Adds total coding time including unclassified languages (overrides: `SHOW_TOTAL`) |
-| `STOP_AT_OTHER`     | `false`, `true`                                                         | Stop when language marked as `Other` is retrieved (overrides: `LANG_COUNT`)       |
+| `STOP_AT_OTHER`     | `false`, `true`                                                         | Stop when language marked as `Other` is retrieved (wins over a positive `LANG_COUNT`) |
 | `IGNORED_LANGUAGES` | <code> </code>, `Binary YAML JSON TOML`                                 | Hide languages from your stats                                                    |
 | `LANGS`             | <code> </code>, `JavaScript, Python, Go`                                 | Show only the comma-separated, case-sensitive languages listed                  |
 
