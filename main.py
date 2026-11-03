@@ -367,25 +367,13 @@ def prep_content(stats: dict[str, Any], /):
         return contents.rstrip("\n")
 
     # make lang content
-    pad_len = len(
-        # comment if it feels way computationally expensive
-        max((str(lng["name"]) for lng in lang_info), key=len)
-        # and then do not for get to set `pad_len` to say 13 :)
-    )
-    language_count, stop_at_other = int(wk_i.language_count), bool(wk_i.stop_at_other)
-    if language_count == 0 and not wk_i.stop_at_other:
-        logger.debug(
-            "Set INPUT_LANG_COUNT to -1 to retrieve all language"
-            + " or specify a positive number (ie. above 0)"
-        )
+    selected = _select_languages(lang_info)
+    if not selected:
         return contents.rstrip("\n")
 
-    ignored_languages = set(_extract_ignored_languages())
-    logger.debug(f"Ignoring {', '.join(ignored_languages)}")
-    for idx, lang in enumerate(lang_info):
+    pad_len = len(max((str(lang["name"]) for lang in selected), key=len))
+    for lang in selected:
         lang_name = str(lang["name"])
-        if lang_name in ignored_languages:
-            continue
         lang_time = str(lang["text"]) if wk_i.show_time else ""
         lang_ratio = float(lang["percent"])
         lang_bar = make_graph(wk_i.block_style, lang_ratio, wk_i.graph_length, lang_name)
@@ -396,12 +384,6 @@ def prep_content(stats: dict[str, Any], /):
             + f"{lang_ratio:.2f}".zfill(5)
             + " %\n"
         )
-        if language_count == -1:
-            continue
-        if stop_at_other and (lang_name == "Other"):
-            break
-        if idx + 1 >= language_count > 0:  # idx starts at 0
-            break
 
     logger.debug("Contents were made\n")
     return contents.rstrip("\n")

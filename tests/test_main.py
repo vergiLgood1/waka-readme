@@ -211,6 +211,39 @@ class TestMain(unittest.TestCase):
         self._set_wk(language_count=0)
         self.assertEqual(prime._select_languages(self._lang_info()), [])
 
+    @staticmethod
+    def _stats() -> dict:
+        """Synthetic WakaTime stats payload."""
+        return {
+            "languages": [
+                {"name": "Python", "text": "2 hrs", "percent": 60.0},
+                {"name": "JavaScript", "text": "1 hr", "percent": 30.0},
+                {"name": "Go", "text": "20 mins", "percent": 10.0},
+            ]
+        }
+
+    def test_prep_content_renders_only_allowlisted_languages(self) -> None:
+        """Only LANGS rows render; percentages stay global."""
+        self._set_wk(langs="Python, Go", language_count=10, show_time=True)
+        content = prime.prep_content(self._stats())
+        self.assertIn("Python", content)
+        self.assertIn("Go", content)
+        self.assertNotIn("JavaScript", content)
+        self.assertIn("60.00 %", content)
+        self.assertIn("10.00 %", content)
+
+    def test_prep_content_pads_to_selected_names_only(self) -> None:
+        """Padding ignores filtered-out long names."""
+        self._set_wk(langs="Python, Go", language_count=10, show_time=True)
+        lines = prime.prep_content(self._stats()).splitlines()
+        self.assertTrue(lines[0].startswith("Python   "))
+        self.assertTrue(lines[1].startswith("Go       "))
+
+    def test_prep_content_no_match_returns_no_language_rows(self) -> None:
+        """A non-matching allowlist renders no language rows."""
+        self._set_wk(langs="Rust", language_count=10)
+        self.assertEqual(prime.prep_content(self._stats()), "")
+
     def test_strtobool(self) -> None:
         """Test string to bool."""
         self.assertTrue(prime.strtobool("Yes"))
