@@ -126,6 +126,7 @@ There are many flags that you can modify as you see fit.
 | `SHOW_MASKED_TIME`  | `false`, `true`                                                         | Adds total coding time including unclassified languages (overrides: `SHOW_TOTAL`) |
 | `STOP_AT_OTHER`     | `false`, `true`                                                         | Stop when language marked as `Other` is retrieved (overrides: `LANG_COUNT`)       |
 | `IGNORED_LANGUAGES` | <code> </code>, `Binary YAML JSON TOML`                                 | Hide languages from your stats                                                    |
+| `LANGS`             | <code> </code>, `JavaScript, Python, Go`                                 | Show only the comma-separated, case-sensitive languages listed                  |
 
 ### Commit Tweaks
 
@@ -180,6 +181,7 @@ jobs:
           SHOW_MASKED_TIME: false # optional
           STOP_AT_OTHER: true # optional
           IGNORED_LANGUAGES: YAML JSON TOML # optional
+          LANGS: JavaScript, Python, Go # optional
           ### commit
           COMMIT_MESSAGE: Updated waka-readme graph with new metrics # optional
           TARGET_BRANCH: master # optional

@@ -66,6 +66,10 @@ inputs:
     description: "Ignore space separated, listed languages"
     default: ""
     required: false
+  LANGS:
+    description: "Comma-separated, case-sensitive list of languages to show"
+    default: ""
+    required: false
 
   # commit tweaks
   COMMIT_MESSAGE:
